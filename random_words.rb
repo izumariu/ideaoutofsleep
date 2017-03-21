@@ -4,8 +4,9 @@ require 'net/http'
 
 begin
 	words = []
+	num_words = [1,2].sample
 	
-	while words.length < 2
+	while words.length < num_words
 		redirect_raw = Net::HTTP.get(URI "http://www.urbandictionary.com/random.php")
 		redirect = redirect_raw.match(/<a href="(?<href>[^"]+)"/)["href"]
 		resp = Net::HTTP.get(URI redirect)

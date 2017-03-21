@@ -33,22 +33,47 @@ if ARGV2.include?("--first-start")
 	end
 end
 
-if ARGV2.include?("--once")
-	puts "POSTING NOW ONLY ONCE"
-	$WORDS = nil
-	until $WORDS
-		load 'random_words.rb'
-	end
-	c.update($template.gsub("$WORD",$WORDS))
-	exit
+def puts(s=nil)
+	$stdout << (s ? "#{Time.now} :: #{s}" : "") << "\n"
 end
 
+def htmlspecialchars(s)
+	for i in (0..255).to_a
+		s.gsub!("&##{i};",i.chr)
+	end
+	return s
+end
+
+def linebreak(s)
+	return [s,""] if s.length<=20
+	s = s.split
+	sr = []
+	while sr.join(" ").length<=20
+		sr << s.shift
+	end
+	s.unshift(sr.pop)
+	return [sr.join(" "),s.join(" ")]
+end
+
+ARGV2.include?("--once")&&$once=true
+
 loop do 
-	until Time.now.to_s.split[1].split(":")[1].to_i%15==10;end
+	$once||(until Time.now.to_s.split[1].split(":")[1].to_i%5==3;end)
+	$once&&puts("POSTING NOW ONLY ONCE")
+	puts "Choosing words"
 	$WORDS = nil
 	until $WORDS
 		load 'random_words.rb'
 	end
-	until Time.now.to_s.split[1].split(":")[1].to_i%15==0;end
-	c.update($template.gsub("$WORD",$WORDS))
+	puts "=> Resulting string: #{$WORDS.inspect}"
+	$once||(until Time.now.to_s.split[1].split(":")[1].to_i%5==0;end)
+	puts "Posting"
+	c.update(htmlspecialchars(
+		$template
+		.gsub("$1",linebreak($WORDS)[0])
+		.gsub("$2",linebreak($WORDS)[1])
+	))
+	#puts linebreak($WORDS).inspect
+	puts "Finished"
+	$once&&break
 end
